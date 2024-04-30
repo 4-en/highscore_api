@@ -10,6 +10,10 @@ from functools import lru_cache
 import os
 import argparse
 import typing
+from hashlib import sha256
+
+def calc_secret_key(name: str, score: int) -> str:
+    return sha256(f"{name}-UwU-{score}".encode()).hexdigest()
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -19,7 +23,7 @@ def get_args():
     return parser.parse_args()
 
 @lru_cache()
-def get_highscores(name: str) -> typing.List[typing.Set[str, int]]:
+def get_highscores(name: str) -> typing.List[typing.Dict[str, int]]:
     """
     Get the highscores from a file.
 
@@ -27,16 +31,21 @@ def get_highscores(name: str) -> typing.List[typing.Set[str, int]]:
     name,score
     """
     highscores = []
+
+    if not os.path.exists(f"{name}.csv"):
+        update_highscores(name, [])
+        return highscores
+
     with open(f"{name}.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
-            highscores.append(row)
+            highscores.append({"name": row["name"], "score": int(row["score"])})
 
     # sort the highscores
     highscores.sort(key=lambda x: x["score"], reverse=True)
     return highscores
 
-def update_highscores(name: str, highscores: typing.List[typing.Set[str, int]]):
+def update_highscores(name: str, highscores: typing.List[typing.Dict[str, int]]):
     """
     Update the highscores in a file.
 
@@ -44,7 +53,7 @@ def update_highscores(name: str, highscores: typing.List[typing.Set[str, int]]):
     name,score
     """
     with open(f"{name}.csv", "w") as file:
-        writer = csv.DictWriter(file, fieldnames=["name", "score"])
+        writer = csv.DictWriter(file, fieldnames=["name", "score"], lineterminator="\n", delimiter=",")
         writer.writeheader()
         for row in highscores:
             writer.writerow(row)
@@ -73,7 +82,7 @@ def get_highscore(name: str):
     check_table(name)
     
     highscores = get_highscores(name)
-    highscore_response = Highscores(name=name, highscores=[Score(**score) for score in highscores])
+    highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
     return highscore_response
 
 @app.post("/highscore/save/{name}", response_model=Highscores)
@@ -82,19 +91,19 @@ def save_highscore(name: str, score: Score):
     check_table(name)
 
     highscores = get_highscores(name)
-    lowest_score = highscores[-1]["score"]
+    lowest_score = highscores[-1]["score"] if len(highscores) > 0 else 0
     if score.score <= lowest_score and len(highscores) >= args.size:
-        highscore_response = Highscores(name=name, highscores=[Score(**score) for score in highscores])
+        highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
         return highscore_response
     
-    highscores.append((score.name, score.score))
+    highscores.append({"name": score.name, "score": score.score})
     highscores.sort(key=lambda x: x["score"], reverse=True)
     if len(highscores) > args.size:
         highscores = highscores[:args.size]
 
     update_highscores(name, highscores)
     get_highscores.cache_clear()
-    highscore_response = Highscores(name=name, highscores=[Score(**score) for score in highscores])
+    highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
     return highscore_response
 
 if __name__ == "__main__":
