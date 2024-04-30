@@ -21,17 +21,16 @@ A simple API developed with FastAPI to save and retrieve highscores. This API al
 - Python 3.8 or higher
 - FastAPI
 - Uvicorn
-- Pydantic
 
 ### Installation
 1. Clone this repository.
 2. Install dependencies:
    ```
-   pip install fastapi uvicorn pydantic
+   pip install -r requirements.txt
    ```
 3. Run the server:
    ```
-   python -m uvicorn main:app --reload
+   python highscore.py
    ```
 
 ## API Endpoints
@@ -51,6 +50,7 @@ The server can be configured with several command line arguments:
 - `--tables`: Comma-separated list of table names to initialize on startup.
 - `--size`: Maximum number of highscores to store in each table (default is 100).
 - `--use_secret`: Enable or disable secret key verification for score submission.
+- `--salt`: Set the salt used to calculate the secret.
 
 ## Usage
 Example of how to interact with the API using `curl`:
