@@ -1,0 +1,12 @@
+# ignore data directories
+tables/
+
+# ignore venv
+venv/
+.venv/
+
+# ignore python stuff
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
