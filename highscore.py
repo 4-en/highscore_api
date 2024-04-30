@@ -32,11 +32,13 @@ def get_highscores(name: str) -> typing.List[typing.Dict[str, int]]:
     """
     highscores = []
 
-    if not os.path.exists(f"{name}.csv"):
+    path = f"tables/{name}.csv"
+
+    if not os.path.exists(path):
         update_highscores(name, [])
         return highscores
 
-    with open(f"{name}.csv", "r") as file:
+    with open(path, "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             highscores.append({"name": row["name"], "score": int(row["score"])})
@@ -52,7 +54,12 @@ def update_highscores(name: str, highscores: typing.List[typing.Dict[str, int]])
     Format of the file should be:
     name,score
     """
-    with open(f"{name}.csv", "w") as file:
+
+    path = f"tables/{name}.csv"
+    # make sure the directory exists
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    with open(path, "w") as file:
         writer = csv.DictWriter(file, fieldnames=["name", "score"], lineterminator="\n", delimiter=",")
         writer.writeheader()
         for row in highscores:
