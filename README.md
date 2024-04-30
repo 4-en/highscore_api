@@ -21,6 +21,7 @@ A simple API developed with FastAPI to save and retrieve highscores. This API al
 - Python 3.8 or higher
 - FastAPI
 - Uvicorn
+- markdown
 
 ### Installation
 1. Clone this repository.
