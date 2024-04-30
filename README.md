@@ -1,6 +1,3 @@
-Here's a draft of a `README.md` for your GitHub repository based on the provided code:
-
-```markdown
 # Highscore API
 
 ## Description
@@ -67,9 +64,3 @@ curl http://localhost:8080/highscore/sample_table
 ```
 curl -X POST -H "Content-Type: application/json" -d '{"name": "Alice", "score": 5000}' http://localhost:8080/highscore/save/sample_table
 ```
-
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
-```
-
-Make sure to replace placeholders like `main:app` with the actual path to your FastAPI application module if it differs, and adjust any other specifics based on your project setup and preferences.
