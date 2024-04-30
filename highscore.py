@@ -12,8 +12,6 @@ import argparse
 import typing
 from hashlib import sha256
 
-def calc_secret_key(name: str, score: int) -> str:
-    return sha256(f"{name}-UwU-{score}".encode()).hexdigest()
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -21,6 +19,7 @@ def get_args():
     parser.add_argument("--tables", type=str, default="main", help="The name of the endpoint and file to store highscores. Use a comma to separate multiple tables.")
     parser.add_argument("--size", type=int, default=100, help="The number of highscores to store.")
     parser.add_argument("--use_secret", action="store_true", help="Use a (very naive) secret key to verify the highscore. The key is sha256(\"name-UwU-score\").hexstring().")
+    parser.add_argument("--salt", type=str, default="-UwU-", help="The salt to use for the secret key.")
     return parser.parse_args()
 
 @lru_cache()
@@ -69,6 +68,9 @@ def update_highscores(name: str, highscores: typing.List[typing.Dict[str, int]])
 args = get_args()
 tables = args.tables.split(",")
 tables = [table.strip().lower() for table in tables]
+
+def calc_secret_key(name: str, score: int) -> str:
+    return sha256(f"{name}{args.salt}{score}".encode()).hexdigest()
 
 app = FastAPI()
 
