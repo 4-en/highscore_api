@@ -1,7 +1,7 @@
 # Description: A simple highscore API that allows you to save and retrieve highscores.
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, Response
 import uvicorn
 from pydantic import BaseModel
 import json
@@ -88,26 +88,34 @@ class Highscores(BaseModel):
 def check_table(name: str):
     if not name in tables:
         raise HTTPException(status_code=404, detail="Table not found")
+
+import markdown   
+@lru_cache()
+def get_root_html():
+    md = ""
+    with open("README.md", "r") as f:
+        md = f.read()
+    
+    insert = "[Repository](https://github.com/4-en/highscore_api) | [API Documentation](/docs) | [Swagger UI](/redoc) | "
+    get_endpoints = " | ".join([f"[{table}](/highscore/{table})" for table in tables])
+    insert += get_endpoints
+    # insert after the first line starting with #
+    pos = md.find("#")
+    pos = md.find("\n", pos)
+    md = md[:pos] + "\n" + insert + md[pos:]
+    md_html = markdown.markdown(md)
+
+    html = ""
+    with open("root.html", "r") as f:
+        html = f.read()
+
+    html = html.replace("{{md_html}}", md_html)
+    return html
     
 @app.get("/")
 def read_root():
-    str = """
-        <html>
-        <head>
-        <title>Highscore API</title>
-        </head>
-        <body>
-        <h1>Highscore API</h1>
-        <p>Use the /highscore/{name} endpoint to get the highscores for a specific table.</p>
-        <p>Use the /highscore/save/{name} endpoint to save a highscore to a specific table.</p>
-        <p>Use the /highscores endpoint to get a list of all tables.</p>
-        <br>
-        <p>Use the /docs endpoint to see the API documentation.</p>
-        </body>
-        </html>
-        """.strip()
-    # return as HTML
-    return HTMLResponse(content=str)
+    return HTMLResponse(content=get_root_html(), status_code=200)
+
 
 @app.get("/highscores", response_model=typing.List[str])
 def get_tables():
