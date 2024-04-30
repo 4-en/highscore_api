@@ -1,7 +1,7 @@
 # Description: A simple highscore API that allows you to save and retrieve highscores.
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 import uvicorn
 from pydantic import BaseModel
 import json
@@ -18,8 +18,9 @@ def calc_secret_key(name: str, score: int) -> str:
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8080)
-    parser.add_argument("--tables", type=str, default="highscores", help="The name of the endpoint and file to store highscores. Use a comma to separate multiple tables.")
+    parser.add_argument("--tables", type=str, default="main", help="The name of the endpoint and file to store highscores. Use a comma to separate multiple tables.")
     parser.add_argument("--size", type=int, default=100, help="The number of highscores to store.")
+    parser.add_argument("--use_secret", action="store_true", help="Use a (very naive) secret key to verify the highscore. The key is sha256(\"name-UwU-score\").hexstring().")
     return parser.parse_args()
 
 @lru_cache()
@@ -75,6 +76,9 @@ class Score(BaseModel):
     name: str
     score: int
 
+class VerifiedScore(Score):
+    secret: str
+
 class Highscores(BaseModel):
     name: str
     highscores: typing.List[Score]
@@ -82,6 +86,30 @@ class Highscores(BaseModel):
 def check_table(name: str):
     if not name in tables:
         raise HTTPException(status_code=404, detail="Table not found")
+    
+@app.get("/")
+def read_root():
+    str = """
+        <html>
+        <head>
+        <title>Highscore API</title>
+        </head>
+        <body>
+        <h1>Highscore API</h1>
+        <p>Use the /highscore/{name} endpoint to get the highscores for a specific table.</p>
+        <p>Use the /highscore/save/{name} endpoint to save a highscore to a specific table.</p>
+        <p>Use the /highscores endpoint to get a list of all tables.</p>
+        <br>
+        <p>Use the /docs endpoint to see the API documentation.</p>
+        </body>
+        </html>
+        """.strip()
+    # return as HTML
+    return HTMLResponse(content=str)
+
+@app.get("/highscores", response_model=typing.List[str])
+def get_tables():
+    return tables
 
 @app.get("/highscore/{name}", response_model=Highscores)
 def get_highscore(name: str):
@@ -92,26 +120,51 @@ def get_highscore(name: str):
     highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
     return highscore_response
 
-@app.post("/highscore/save/{name}", response_model=Highscores)
-def save_highscore(name: str, score: Score):
-    name = name.lower()
-    check_table(name)
+if args.use_secret:
+    @app.post("/highscore/save/{name}", response_model=Highscores)
+    def save_highscore(name: str, score: VerifiedScore):
+        name = name.lower()
+        check_table(name)
 
-    highscores = get_highscores(name)
-    lowest_score = highscores[-1]["score"] if len(highscores) > 0 else 0
-    if score.score <= lowest_score and len(highscores) >= args.size:
+        if score.secret != calc_secret_key(score.name, score.score):
+            return JSONResponse(status_code=403, content={"message": "Invalid secret key."})
+
+        highscores = get_highscores(name)
+        lowest_score = highscores[-1]["score"] if len(highscores) > 0 else 0
+        if score.score <= lowest_score and len(highscores) >= args.size:
+            highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
+            return highscore_response
+        
+        highscores.append({"name": score.name, "score": score.score})
+        highscores.sort(key=lambda x: x["score"], reverse=True)
+        if len(highscores) > args.size:
+            highscores = highscores[:args.size]
+
+        update_highscores(name, highscores)
+        get_highscores.cache_clear()
         highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
         return highscore_response
-    
-    highscores.append({"name": score.name, "score": score.score})
-    highscores.sort(key=lambda x: x["score"], reverse=True)
-    if len(highscores) > args.size:
-        highscores = highscores[:args.size]
+else:
+    @app.post("/highscore/save/{name}", response_model=Highscores)
+    def save_highscore(name: str, score: Score):
+        name = name.lower()
+        check_table(name)
 
-    update_highscores(name, highscores)
-    get_highscores.cache_clear()
-    highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
-    return highscore_response
+        highscores = get_highscores(name)
+        lowest_score = highscores[-1]["score"] if len(highscores) > 0 else 0
+        if score.score <= lowest_score and len(highscores) >= args.size:
+            highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
+            return highscore_response
+        
+        highscores.append({"name": score.name, "score": score.score})
+        highscores.sort(key=lambda x: x["score"], reverse=True)
+        if len(highscores) > args.size:
+            highscores = highscores[:args.size]
+
+        update_highscores(name, highscores)
+        get_highscores.cache_clear()
+        highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
+        return highscore_response
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=args.port)
