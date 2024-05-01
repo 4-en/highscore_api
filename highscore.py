@@ -73,7 +73,6 @@ def update_highscores(name: str, highscores: typing.List[typing.Dict[str, int]])
 args = get_args()
 tables = args.tables.split(",")
 tables = [table.strip().lower() for table in tables]
-tables = sorted(tables)
 
 def calc_secret_key(name: str, score: int) -> str:
     return sha256(f"{name}{args.salt}{score}".encode()).hexdigest()
@@ -97,7 +96,7 @@ def check_table(name: str):
 
 import markdown   
 @lru_cache()
-def get_root_html():
+def get_readme_html():
     md = ""
     with open("README.md", "r") as f:
         md = f.read()
@@ -120,7 +119,11 @@ def get_root_html():
     
 @app.get("/")
 def read_root():
-    return HTMLResponse(content=get_root_html(), status_code=200)
+    return create_table_html(tables[0])
+
+@app.get("/readme")
+def read_readme():
+    return HTMLResponse(content=get_readme_html(), status_code=200)
 
 def _get_position_number(position: int) -> str:
     if position == 0:

@@ -68,6 +68,7 @@
         }
 
         @media (max-width: 600px) {
+
             /* Responsive design for small screens */
             .th-rank {
                 width: 20%;
@@ -106,6 +107,23 @@
         #table-select option:hover {
             background-color: #30363d;
         }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header a {
+            color: #56548a;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .header a:hover {
+            color: #8a85ff;
+        }
     </style>
     <script>
         function redirectToSite(value) {
@@ -120,9 +138,14 @@
 
 <body>
     <div id="table-wrapper">
-        <select id="table-select" onchange="redirectToSite(this.value)">
-            {{options}}
-        </select>
+        <div class="header">
+            <select id="table-select" onchange="redirectToSite(this.value)">
+                {{options}}
+            </select>
+
+            <a href="/readme">About</a>
+        </div>
+
         <table>
             <thead>
                 <tr>
