@@ -103,8 +103,8 @@ def get_root_html():
         md = f.read()
     
     insert = "[Repository](https://github.com/4-en/highscore_api) | [API Documentation](/docs) | [Swagger UI](/redoc) | "
-    get_endpoints = " | ".join([f"[{table}](/highscore/{table})" for table in tables])
-    insert += get_endpoints
+    html_views = " | ".join([f"[{table.capitalize()}](/view/{table})" for table in tables])
+    insert += "\n\n## Highscore Tables\n" + html_views + "\n"
     # insert after the first line starting with #
     pos = md.find("#")
     pos = md.find("\n", pos)
