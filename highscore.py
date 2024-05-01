@@ -23,6 +23,11 @@ def get_args():
     return parser.parse_args()
 
 @lru_cache()
+def file_to_string_cached(path: str) -> str:
+    with open(path, "r") as file:
+        return file.read()
+
+@lru_cache()
 def get_highscores(name: str) -> typing.List[typing.Dict[str, int]]:
     """
     Get the highscores from a file.
@@ -68,6 +73,7 @@ def update_highscores(name: str, highscores: typing.List[typing.Dict[str, int]])
 args = get_args()
 tables = args.tables.split(",")
 tables = [table.strip().lower() for table in tables]
+tables = sorted(tables)
 
 def calc_secret_key(name: str, score: int) -> str:
     return sha256(f"{name}{args.salt}{score}".encode()).hexdigest()
@@ -115,6 +121,40 @@ def get_root_html():
 @app.get("/")
 def read_root():
     return HTMLResponse(content=get_root_html(), status_code=200)
+
+def _get_position_number(position: int) -> str:
+    if position == 0:
+        # crown
+        return "👑"
+    if position == 1:
+        # silver medal
+        return "🥈"
+    if position == 2:
+        # bronze medal
+        return "🥉"
+    return str(position + 1)
+
+def create_table_html(name: str):
+    check_table(name)
+    skeleton = file_to_string_cached("view.html")
+    highscores = get_highscores(name)
+    tables_this_first = [ name ] + [table for table in tables if table != name]
+    tables_html = "\n".join([f"<option value=\"{table}\">{table.capitalize()}</option>" for table in tables_this_first])
+    highscores_html = "\n".join([f"<tr><td>{_get_position_number(pos)}</td><td>{score['name']}</td><td class=\"score\">{score['score']}</td></tr>" for pos, score in enumerate(highscores)])
+
+    skeleton = skeleton.replace("{{options}}", tables_html)
+    skeleton = skeleton.replace("{{table}}", highscores_html)
+
+    return HTMLResponse(content=skeleton, status_code=200)
+
+@app.get("/view/{name}")
+def view_table(name: str):
+    return create_table_html(name)
+
+@app.get("/view")
+def view_table_default():
+    return create_table_html(tables[0])
+
 
 
 @app.get("/highscores", response_model=typing.List[str])

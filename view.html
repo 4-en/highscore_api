@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Highscores</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        tbody {
+            border-radius: 6px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        th {
+            background-color: #161b22;
+        }
+
+        td {
+            background-color: #0d1117;
+        }
+
+        tr:nth-child(even) {
+            background-color: #161b22;
+        }
+
+        .score {
+            text-align: right;
+            /* Align score values to the right */
+            width: 20%;
+        }
+
+        .th-rank {
+            width: 20%;
+            text-align: left;
+        }
+
+        .th-name {
+            width: 60%;
+            text-align: left;
+        }
+
+        #table-wrapper {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 600px) {
+            /* Responsive design for small screens */
+            .th-rank {
+                width: 20%;
+            }
+
+            .th-name {
+                width: 60%;
+            }
+
+            .score {
+                width: 20%;
+            }
+        }
+
+        #table-select {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        #table-select option {
+            background-color: #161b22;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        #table-select option:hover {
+            background-color: #30363d;
+        }
+    </style>
+    <script>
+        function redirectToSite(value) {
+            // Construct the new URL
+            var newUrl = '/view/' + value;
+            // Redirect to the new URL
+            console.log(newUrl);
+            window.location.replace(newUrl);
+        }
+    </script>
+</head>
+
+<body>
+    <div id="table-wrapper">
+        <select id="table-select" onchange="redirectToSite(this.value)">
+            {{options}}
+        </select>
+        <table>
+            <thead>
+                <tr>
+                    <th class="th-rank">Rank</th>
+                    <th class="th-name">Name</th>
+                    <th class="score">Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{table}}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
