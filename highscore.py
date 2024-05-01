@@ -111,7 +111,7 @@ def get_readme_html():
     md_html = markdown.markdown(md)
 
     html = ""
-    with open("root.html", "r") as f:
+    with open("readme_skeleton.html", "r") as f:
         html = f.read()
 
     html = html.replace("{{md_html}}", md_html)
@@ -139,7 +139,7 @@ def _get_position_number(position: int) -> str:
 
 def create_table_html(name: str):
     check_table(name)
-    skeleton = file_to_string_cached("view.html")
+    skeleton = file_to_string_cached("view_skeleton.html")
     highscores = get_highscores(name)
     tables_this_first = [ name ] + [table for table in tables if table != name]
     tables_html = "\n".join([f"<option value=\"{table}\">{table.capitalize()}</option>" for table in tables_this_first])
