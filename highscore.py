@@ -4,13 +4,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, HTMLResponse, Response
 import uvicorn
 from pydantic import BaseModel
-import json
 import csv
 from functools import lru_cache
 import os
 import argparse
 import typing
 from hashlib import sha256
+import time
 
 
 def get_args():
@@ -41,7 +41,7 @@ def get_highscores(name: str) -> typing.List[typing.Dict[str, int]]:
     with open(path, "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
-            highscores.append({"name": row["name"], "score": int(row["score"])})
+            highscores.append({"name": row["name"], "score": int(row["score"]), "time": row["time"]})
 
     # sort the highscores
     highscores.sort(key=lambda x: x["score"], reverse=True)
@@ -60,7 +60,7 @@ def update_highscores(name: str, highscores: typing.List[typing.Dict[str, int]])
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     with open(path, "w") as file:
-        writer = csv.DictWriter(file, fieldnames=["name", "score"], lineterminator="\n", delimiter=",")
+        writer = csv.DictWriter(file, fieldnames=["name", "score", "time"], lineterminator="\n", delimiter=",")
         writer.writeheader()
         for row in highscores:
             writer.writerow(row)
@@ -145,7 +145,7 @@ if args.use_secret:
             highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
             return highscore_response
         
-        highscores.append({"name": score.name, "score": score.score})
+        highscores.append({"name": score.name, "score": score.score, "time": int(time.time())})
         highscores.sort(key=lambda x: x["score"], reverse=True)
         if len(highscores) > args.size:
             highscores = highscores[:args.size]
@@ -166,7 +166,7 @@ else:
             highscore_response = Highscores(name=name, highscores=[Score(name=score["name"], score=score["score"]) for score in highscores])
             return highscore_response
         
-        highscores.append({"name": score.name, "score": score.score})
+        highscores.append({"name": score.name, "score": score.score, "time": int(time.time())})
         highscores.sort(key=lambda x: x["score"], reverse=True)
         if len(highscores) > args.size:
             highscores = highscores[:args.size]
