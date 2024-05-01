@@ -158,7 +158,14 @@ def view_table(name: str):
 def view_table_default():
     return create_table_html(tables[0])
 
-
+@lru_cache()
+def get_favicon():
+    with open("favicon.ico", "rb") as f:
+        return f.read()
+    
+@app.get("/favicon.ico")
+def favicon():
+    return Response(content=get_favicon(), media_type="image/x-icon")
 
 @app.get("/highscores", response_model=typing.List[str])
 def get_tables():
