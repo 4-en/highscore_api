@@ -21,6 +21,7 @@ def get_args():
     parser.add_argument("--use_secret", action="store_true", help="Use a (very naive) secret key to verify the highscore. The key is sha256(\"name-UwU-score\").hexstring().")
     parser.add_argument("--salt", type=str, default="-UwU-", help="The salt to use for the secret key.")
     parser.add_argument("--any_table", action="store_true", help="Allow any table to be used. If not set, only the tables specified in --tables will be allowed.")
+    parser.add_argument("--load_all", action="store_true", help="Load all highscore files that exist in the tables directory.")
     return parser.parse_args()
 
 @lru_cache()
@@ -74,6 +75,13 @@ def update_highscores(name: str, highscores: typing.List[typing.Dict[str, int]])
 args = get_args()
 tables = args.tables.split(",")
 tables = [table.strip().lower() for table in tables]
+
+if args.load_all:
+    for file in os.listdir("tables"):
+        if file.endswith(".csv"):
+            table_name = file[:-4]
+            if table_name not in tables:
+                tables.append(table_name.strip().lower())
 
 def calc_secret_key(name: str, score: int) -> str:
     return sha256(f"{name}{args.salt}{score}".encode()).hexdigest()
